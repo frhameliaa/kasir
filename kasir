@@ -1,0 +1,132 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+
+class KasirApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Aplikasi Kasir Sederhana")
+        self.root.geometry("600x600")
+
+        self.keranjang = []
+
+        # ========================== INPUT BARANG ========================
+        frame_input = tk.LabelFrame(root, text="Input Barang", padx=10, pady=10)
+        frame_input.pack(fill="x", padx=10, pady=10)
+
+        tk.Label(frame_input, text="Nama Barang").grid(row=0, column=0, sticky="w")
+        self.nama_entry = tk.Entry(frame_input)
+        self.nama_entry.grid(row=0, column=1)
+
+        tk.Label(frame_input, text="Harga").grid(row=1, column=0, sticky="w")
+        self.harga_entry = tk.Entry(frame_input)
+        self.harga_entry.grid(row=1, column=1)
+
+        tk.Label(frame_input, text="Jumlah").grid(row=2, column=0, sticky="w")
+        self.jumlah_entry = tk.Entry(frame_input)
+        self.jumlah_entry.grid(row=2, column=1)
+
+        tk.Button(frame_input, text="Tambah ke Keranjang", command=self.tambah_keranjang).grid(row=3, column=0, columnspan=2, pady=10)
+
+        # ========================= TABEL KERANJANG =========================
+        frame_tabel = tk.LabelFrame(root, text="Keranjang", padx=10, pady=10)
+        frame_tabel.pack(fill="both", expand=True, padx=10, pady=10)
+
+        self.tabel = ttk. Treeview(frame_tabel, columns=("nama", "harga", "jumlah", "subtotal"), show="headings", height=10)
+        self.tabel.heading("nama", text="Nama Barang")
+        self.tabel.heading("harga", text="Harga")
+        self.tabel.heading("jumlah", text="Qty")
+        self.tabel.heading("subtotal", text="Subtotal")
+
+        self.tabel.column("nama", width=150)
+        self.tabel.column("harga", width=80)
+        self.tabel.column("jumlah", width=50)
+        self.tabel.column("subtotal", width=100)
+
+        self.tabel.pack(fill="both", expand=True)
+
+        # ======================= TOTAL ========================
+        frame_total = tk.Frame(root)
+        frame_total.pack(fill="x", padx=10, pady=10)
+
+        tk.Label(frame_total, text="Total: ").grid(row=1, column=0, sticky="w")
+        self.total_label = tk.Label(frame_total, text="0")
+        self.total_label.grid(row=0, column=1, sticky="w")
+
+        # ========================== BAYAR =======================
+        tk.Label(frame_total, text="Bayar: ").grid(row=1, column=0, sticky="w")
+        self.bayar_entry = tk.Entry(frame_total)
+        self.bayar_entry.grid(row=1, column=1)
+
+        tk.Button(frame_total, text="Hitung Kembalian", command=self.hitung_kembalian).grid(row=2, column=0, columnspan=2, pady=5)
+
+        tk.Label(frame_total, text="Kembalian: ").grid(row=3, column=0, sticky="w")
+        self.kembalian_label = tk.Label(frame_total, text="0")
+        self.kembalian_label.grid(row=3, column=1, sticky="w")
+
+        # ========================= RESET ===========================
+        tk.Button(root, text="Reset Transaksi", command=self.reset_transaksi, bg="tomato", fg= "white").pack(pady=10)
+
+    # ====================== FUNCTION TAMBAH ======================
+    def tambah_keranjang(self):
+        nama = self.nama_entry.get()
+        harga = self.harga_entry.get()
+        jumlah = self.jumlah_entry.get()
+
+        if not nama or not harga or not jumlah:
+            messagebox.showwarning("Warning", "Semua field harus diisi!")
+            return
+        
+        try:
+            harga = int(harga)
+            jumlah = int(jumlah)
+        except:
+            messagebox.showerror("Error", "Harga dan jumlah harus berupa angka!")
+            return
+        
+        subtotal = harga * jumlah
+        self.keranjang.append((nama, harga, jumlah, subtotal))
+
+        self.tabel.insert("", tk.END, values=(nama, harga, jumlah, subtotal))
+        self.update_total()
+
+        self.nama_entry.delete(0, tk.END)
+        self.harga_entry.delete(0, tk.END)
+        self.jumlah_entry.delete(0, tk.END)
+
+    # ======================== UPDATE TOTAL ====================
+    def update_total(self):
+        total = sum(item[3] for item in self.keranjang)
+        self.total_label.config(text=str(total))
+
+    # ================ HITUNG KEMBALIAN ===============
+    def hitung_kembalian(self):
+        try:
+            bayar = int(self.bayar_entry.get())
+            total = int(self.total_label.cget("text"))
+
+            if bayar < total:
+                messagebox.showwarning("Warning", "Uang tidak cukup!")
+                return
+            
+            kembalian = bayar - total 
+            self.kembalian_label.config(text=str(kembalian))
+
+        except:
+            messagebox.showerror("Error", "Input pembayaran harus angka!")
+
+    # =========================== RESET =========================
+    def reset_transaksi(self):
+        self.keranjang.clear()
+        for item in self.tabel.get_children():
+            self.tabel.delete(item)
+
+        self.total_label.config(text="0")
+        self.kembalian_label.config(text="0")
+        self.bayar_entry.delete(0, tk.END)
+
+        messagebox.showinfo("Info", "Transaksi baru dimulai!")
+
+# ======================== RUN APP =========================
+root= tk.Tk()
+app = KasirApp(root)
+root.mainloop()
